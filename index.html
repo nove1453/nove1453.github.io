@@ -1,100 +1,73 @@
-<div class="grid">
-  <div class="card">
-    <h2>入力</h2>
-    <div class="row">
-      <div>
-        <label>手取り月収（円）</label>
-        <input type="number" id="monthlyIncome" value="400000" min="0" step="1000">
-      </div>
-      <div>
-        <label>年間ボーナス（円）</label>
-        <input type="number" id="bonus" value="1600000" min="0" step="10000">
-      </div>
-    </div>
-    <div class="row">
-      <div>
-        <label>毎月の生活費（円）</label>
-        <input type="number" id="livingExpense" value="250000" min="0" step="1000">
-      </div>
-      <div>
-        <label>既存の預貯金（円）</label>
-        <input type="number" id="currentSaving" value="1000000" min="0" step="10000">
-      </div>
-    </div>
-
     <div style="margin-top:12px">
       <label>余剰資金の配分（未来の安心 ↔ 楽しむ口座）</label>
-      <input type="range" id="allocSlider" min="0" max="100" value="50" oninput="updateAllocLabel()">
-      <div class="flex">
+      <input type="range" id="allocSlider" min="0" max="100" value="50">
+      <div>
         <span class="pill">未来の安心: <span id="allocFuture">50</span>%</span>
         <span class="pill">楽しむ: <span id="allocEnjoy">50</span>%</span>
-        <span class="muted">スライダーで配分を調整できます</span>
+        <span class="muted">スライダーで配分を調整</span>
       </div>
     </div>
 
     <div style="margin-top:16px">
-      <div class="flex">
-        <h2 style="margin:0;color:#c7d2fe;font-size:16px">経験・目的（年間予算）</h2>
-        <button class="btn btn-outline" onclick="addExperience(event)">＋ 項目を追加</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <h2 style="margin:0;font-size:16px">経験・目的（年間予算）</h2>
+        <button type="button" class="btn" id="addExpBtn">＋ 項目を追加</button>
       </div>
       <div id="expList" class="list">
         <div class="exp">
           <input type="text" placeholder="例: 2ヶ月に1回の旅行" value="旅行">
           <input type="number" placeholder="年間予算(円)" value="600000" min="0" step="1000">
-          <button class="btn" onclick="removeExp(event)">削除</button>
+          <button type="button" class="btn exp-remove">削除</button>
         </div>
         <div class="exp">
           <input type="text" placeholder="例: 年1回の大きな買い物" value="年1回の買い物">
           <input type="number" placeholder="年間予算(円)" value="300000" min="0" step="1000">
-          <button class="btn" onclick="removeExp(event)">削除</button>
+          <button type="button" class="btn exp-remove">削除</button>
         </div>
       </div>
     </div>
 
-    <div class="flex" style="margin-top:14px">
-      <button class="btn btn-primary" onclick="calculate()">計算する</button>
-      <button class="btn" onclick="resetForm()">リセット</button>
-      <span class="muted">数値を変えたら再計算してください</span>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:14px;">
+      <button type="button" class="btn btn-primary" id="calcBtn">計算する</button>
+      <button type="button" class="btn" id="resetBtn">リセット</button>
+      <span class="muted">数値を変えたら「計算する」を押してください</span>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>ダッシュボード</h2>
+  <div id="warning" class="pill danger" style="display:none">支出が収入を超えています。見直しが必要です。</div>
+  <div id="oknote" class="pill ok" style="display:none">実現可能です。配分と積立を確認してください。</div>
+
+  <div class="stat">
+    <div class="box">
+      <div class="k">年間収入</div>
+      <div class="v" id="k_income">-</div>
+    </div>
+    <div class="box">
+      <div class="k">年間支出（生活+経験）</div>
+      <div class="v" id="k_out">-</div>
+    </div>
+    <div class="box">
+      <div class="k">年間余剰資金</div>
+      <div class="v" id="k_surplus">-</div>
     </div>
   </div>
 
-  <div class="card">
-    <h2>ダッシュボード</h2>
-    <div id="warning" class="pill danger" style="display:none">支出が収入を超えています。見直しが必要です。</div>
-    <div id="oknote" class="pill ok" style="display:none">実現可能です。配分と積立を確認してください。</div>
-
-    <div class="stat">
-      <div class="box">
-        <div class="k">年間収入</div>
-        <div class="v" id="k_income">-</div>
-      </div>
-      <div class="box">
-        <div class="k">年間支出（生活+経験）</div>
-        <div class="v" id="k_out">-</div>
-      </div>
-      <div class="box">
-        <div class="k">年間余剰資金</div>
-        <div class="v" id="k_surplus">-</div>
-      </div>
+  <div class="row" style="margin-top:10px">
+    <div class="box" style="background:#fff;border:1px solid var(--bd);border-radius:10px;padding:10px">
+      <canvas id="barAnnual" height="200"></canvas>
     </div>
-
-    <div class="row" style="margin-top:10px">
-      <div class="box" style="background:#0b1020;border:1px solid rgba(148,163,184,.15);border-radius:10px;padding:10px">
-        <canvas id="barAnnual" height="200"></canvas>
-      </div>
-      <div class="box" style="background:#0b1020;border:1px solid rgba(148,163,184,.15);border-radius:10px;padding:10px">
-        <canvas id="lineSaving" height="200"></canvas>
-      </div>
+    <div class="box" style="background:#fff;border:1px solid var(--bd);border-radius:10px;padding:10px">
+      <canvas id="lineSaving" height="200"></canvas>
     </div>
+  </div>
 
-    <div style="margin-top:12px">
-      <h2 style="margin:0 0 8px;color:#c7d2fe;font-size:16px">アクション</h2>
-      <ul id="actions" class="muted" style="line-height:1.6">
-        <li>入力して「計算する」を押してください。</li>
-      </ul>
-      <div class="footnote">
-        グラフは12ヶ月の推移を表示（初期残高＋月次積立）。税金・利回りは考慮していません。
-      </div>
-    </div>
+  <div style="margin-top:12px">
+    <h2 style="margin:0 0 8px;font-size:16px">アクション</h2>
+    <ul id="actions" class="muted" style="line-height:1.6">
+      <li>入力して「計算する」を押してください。</li>
+    </ul>
   </div>
 </div>
