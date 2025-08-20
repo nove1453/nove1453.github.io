@@ -1,19 +1,50 @@
+.grid{ grid-template-columns: 1fr; }
+.row{ grid-template-columns: 1fr; }
+.exp{ grid-template-columns: 1fr 1fr auto; }
+  <!-- フォーム（送信はさせない） -->
+  <form id="simForm" onsubmit="return false;">
+    <!-- 収入・固定費 -->
+    <div class="row">
+      <div>
+        <label for="monthlyIncome">手取り月収（円）</label>
+        <input type="number" id="monthlyIncome" value="400000" min="0" step="1000">
+      </div>
+      <div>
+        <label for="bonus">年間ボーナス（円）</label>
+        <input type="number" id="bonus" value="1600000" min="0" step="10000">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="livingExpense">毎月の生活費（円）</label>
+        <input type="number" id="livingExpense" value="250000" min="0" step="1000">
+      </div>
+      <div>
+        <label for="currentSaving">既存の預貯金（円）</label>
+        <input type="number" id="currentSaving" value="1000000" min="0" step="10000">
+      </div>
+    </div>
+
+    <!-- 余剰資金の配分 -->
     <div style="margin-top:12px">
-      <label>余剰資金の配分（未来の安心 ↔ 楽しむ口座）</label>
+      <label for="allocSlider">余剰資金の配分（未来の安心 ↔ 楽しむ口座）</label>
       <input type="range" id="allocSlider" min="0" max="100" value="50">
       <div>
         <span class="pill">未来の安心: <span id="allocFuture">50</span>%</span>
         <span class="pill">楽しむ: <span id="allocEnjoy">50</span>%</span>
-        <span class="muted">スライダーで配分を調整</span>
+        <span class="muted">スライダーで配分を調整できます</span>
       </div>
     </div>
 
+    <!-- 経験・目的 -->
     <div style="margin-top:16px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <h2 style="margin:0;font-size:16px">経験・目的（年間予算）</h2>
         <button type="button" class="btn" id="addExpBtn">＋ 項目を追加</button>
       </div>
       <div id="expList" class="list">
+        <!-- 初期項目：旅行 年60万、買い物 年30万 -->
         <div class="exp">
           <input type="text" placeholder="例: 2ヶ月に1回の旅行" value="旅行">
           <input type="number" placeholder="年間予算(円)" value="600000" min="0" step="1000">
@@ -35,7 +66,8 @@
   </form>
 </div>
 
-<div class="card">
+<!-- ダッシュボード -->
+<div class="card" id="panel-dashboard">
   <h2>ダッシュボード</h2>
   <div id="warning" class="pill danger" style="display:none">支出が収入を超えています。見直しが必要です。</div>
   <div id="oknote" class="pill ok" style="display:none">実現可能です。配分と積立を確認してください。</div>
@@ -69,5 +101,8 @@
     <ul id="actions" class="muted" style="line-height:1.6">
       <li>入力して「計算する」を押してください。</li>
     </ul>
+    <p class="muted" style="margin:8px 0 0">
+      ※ グラフは12ヶ月の推移（初期残高＋月次積立）を表示。利回り・税制は未考慮です。
+    </p>
   </div>
 </div>
