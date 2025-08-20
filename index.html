@@ -1,76 +1,100 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資産形成シミュレーション</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; padding: 10px; }
-        h1 { text-align: center; }
-        label { display: block; margin-top: 10px; font-weight: bold; }
-        input[type=number] { width: 100%; padding: 8px; margin-top: 5px; }
-        button { margin-top: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
-        .result { margin-top: 20px; background-color: #f0f0f0; padding: 15px; border-radius: 8px; }
-    </style>
-</head>
-<body>
+<div class="grid">
+  <div class="card">
+    <h2>入力</h2>
+    <div class="row">
+      <div>
+        <label>手取り月収（円）</label>
+        <input type="number" id="monthlyIncome" value="400000" min="0" step="1000">
+      </div>
+      <div>
+        <label>年間ボーナス（円）</label>
+        <input type="number" id="bonus" value="1600000" min="0" step="10000">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>毎月の生活費（円）</label>
+        <input type="number" id="livingExpense" value="250000" min="0" step="1000">
+      </div>
+      <div>
+        <label>既存の預貯金（円）</label>
+        <input type="number" id="currentSaving" value="1000000" min="0" step="10000">
+      </div>
+    </div>
 
-<h1>資産形成シミュレーション</h1>
+    <div style="margin-top:12px">
+      <label>余剰資金の配分（未来の安心 ↔ 楽しむ口座）</label>
+      <input type="range" id="allocSlider" min="0" max="100" value="50" oninput="updateAllocLabel()">
+      <div class="flex">
+        <span class="pill">未来の安心: <span id="allocFuture">50</span>%</span>
+        <span class="pill">楽しむ: <span id="allocEnjoy">50</span>%</span>
+        <span class="muted">スライダーで配分を調整できます</span>
+      </div>
+    </div>
 
-<form id="simulationForm">
-    <label for="monthlyIncome">手取り月収（円）:</label>
-    <input type="number" id="monthlyIncome" name="monthlyIncome" min="0" value="400000" required>
+    <div style="margin-top:16px">
+      <div class="flex">
+        <h2 style="margin:0;color:#c7d2fe;font-size:16px">経験・目的（年間予算）</h2>
+        <button class="btn btn-outline" onclick="addExperience(event)">＋ 項目を追加</button>
+      </div>
+      <div id="expList" class="list">
+        <div class="exp">
+          <input type="text" placeholder="例: 2ヶ月に1回の旅行" value="旅行">
+          <input type="number" placeholder="年間予算(円)" value="600000" min="0" step="1000">
+          <button class="btn" onclick="removeExp(event)">削除</button>
+        </div>
+        <div class="exp">
+          <input type="text" placeholder="例: 年1回の大きな買い物" value="年1回の買い物">
+          <input type="number" placeholder="年間予算(円)" value="300000" min="0" step="1000">
+          <button class="btn" onclick="removeExp(event)">削除</button>
+        </div>
+      </div>
+    </div>
 
-    <label for="bonus">年間ボーナス（円）:</label>
-    <input type="number" id="bonus" name="bonus" min="0" value="1600000" required>
+    <div class="flex" style="margin-top:14px">
+      <button class="btn btn-primary" onclick="calculate()">計算する</button>
+      <button class="btn" onclick="resetForm()">リセット</button>
+      <span class="muted">数値を変えたら再計算してください</span>
+    </div>
+  </div>
 
-    <label for="livingExpense">毎月の生活費（円）:</label>
-    <input type="number" id="livingExpense" name="livingExpense" min="0" value="250000" required>
+  <div class="card">
+    <h2>ダッシュボード</h2>
+    <div id="warning" class="pill danger" style="display:none">支出が収入を超えています。見直しが必要です。</div>
+    <div id="oknote" class="pill ok" style="display:none">実現可能です。配分と積立を確認してください。</div>
 
-    <label for="travelCost">2ヶ月に1回の旅行費用（円）:</label>
-    <input type="number" id="travelCost" name="travelCost" min="0" value="100000" required>
+    <div class="stat">
+      <div class="box">
+        <div class="k">年間収入</div>
+        <div class="v" id="k_income">-</div>
+      </div>
+      <div class="box">
+        <div class="k">年間支出（生活+経験）</div>
+        <div class="v" id="k_out">-</div>
+      </div>
+      <div class="box">
+        <div class="k">年間余剰資金</div>
+        <div class="v" id="k_surplus">-</div>
+      </div>
+    </div>
 
-    <label for="annualShopping">年1回の買い物費用（円）:</label>
-    <input type="number" id="annualShopping" name="annualShopping" min="0" value="300000" required>
+    <div class="row" style="margin-top:10px">
+      <div class="box" style="background:#0b1020;border:1px solid rgba(148,163,184,.15);border-radius:10px;padding:10px">
+        <canvas id="barAnnual" height="200"></canvas>
+      </div>
+      <div class="box" style="background:#0b1020;border:1px solid rgba(148,163,184,.15);border-radius:10px;padding:10px">
+        <canvas id="lineSaving" height="200"></canvas>
+      </div>
+    </div>
 
-    <button type="button" onclick="calculate()">計算する</button>
-</form>
-
-<div class="result" id="resultArea"></div>
-
-<script>
-function calculate() {
-    const monthlyIncome = Number(document.getElementById('monthlyIncome').value);
-    const bonus = Number(document.getElementById('bonus').value);
-    const livingExpense = Number(document.getElementById('livingExpense').value);
-    const travelCost = Number(document.getElementById('travelCost').value);
-    const annualShopping = Number(document.getElementById('annualShopping').value);
-
-    const yearlyIncome = monthlyIncome * 12 + bonus;
-    const yearlyLivingExpense = livingExpense * 12;
-    const yearlyTravelExpense = travelCost * 6;
-    const yearlyTotalExpense = yearlyLivingExpense + yearlyTravelExpense + annualShopping;
-
-    const yearlyDisposableIncome = yearlyIncome - yearlyTotalExpense;
-    const monthlyInvestmentAmount = yearlyDisposableIncome / 12;
-
-    let resultHTML = `<h2>計算結果</h2>`;
-    resultHTML += `<p><strong>年間収入:</strong> ${yearlyIncome.toLocaleString()} 円</p>`;
-    resultHTML += `<p><strong>年間生活費:</strong> ${yearlyLivingExpense.toLocaleString()} 円</p>`;
-    resultHTML += `<p><strong>年間旅行費用:</strong> ${yearlyTravelExpense.toLocaleString()} 円</p>`;
-    resultHTML += `<p><strong>年間買い物費用:</strong> ${annualShopping.toLocaleString()} 円</p>`;
-    resultHTML += `<p><strong>年間支出合計:</strong> ${yearlyTotalExpense.toLocaleString()} 円</p>`;
-
-    if (yearlyDisposableIncome < 0) {
-        resultHTML += `<p style="color:red;"><strong>警告:</strong> 支出が収入を超えています。見直しが必要です。</p>`;
-    } else {
-        resultHTML += `<p><strong>年間余剰資金（貯蓄・投資に回せるお金）:</strong> ${yearlyDisposableIncome.toLocaleString()} 円</p>`;
-        resultHTML += `<p><strong>毎月積立や投資に回せる金額の目安:</strong> ${Math.floor(monthlyInvestmentAmount).toLocaleString()} 円</p>`;
-    }
-
-    document.getElementById('resultArea').innerHTML = resultHTML;
-}
-</script>
-
-</body>
-</html>
+    <div style="margin-top:12px">
+      <h2 style="margin:0 0 8px;color:#c7d2fe;font-size:16px">アクション</h2>
+      <ul id="actions" class="muted" style="line-height:1.6">
+        <li>入力して「計算する」を押してください。</li>
+      </ul>
+      <div class="footnote">
+        グラフは12ヶ月の推移を表示（初期残高＋月次積立）。税金・利回りは考慮していません。
+      </div>
+    </div>
+  </div>
+</div>
